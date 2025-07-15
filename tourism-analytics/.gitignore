@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+
+# Storage
+backend/storage/uploads/*
+backend/storage/reports/*
+backend/storage/logs/*
+!backend/storage/*/.gitkeep

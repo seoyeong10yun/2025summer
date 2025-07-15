@@ -1,0 +1,30 @@
+services:
+  nginx:
+    build: ./nginx
+    ports: ["80:80", "443:443"]
+    depends_on: [frontend, backend]
+    
+  frontend:
+    build: ./frontend
+    environment:
+      - NODE_ENV=production
+      
+  backend:
+    build: ./backend
+    environment:
+      - PYTHONPATH=/app
+    depends_on: [redis]
+    
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    
+  celery_worker:
+    build: ./backend
+    command: celery -A app.tasks worker
+    depends_on: [redis, backend]
+    
+  celery_beat:
+    build: ./backend
+    command: celery -A app.tasks beat
+    depends_on: [redis, celery_worker]
