@@ -1,0 +1,49 @@
+@import url('https://cdn.jsdelivr.net/gh/spoqa/spoqa-han-sans@2.1.2/css/SpoqaHanSansNeo.css');
+
+body {
+  background-color: #F9FAFB;
+  color: #111827;
+  font-family: 'Pretendard', sans-serif;
+}
+
+
+.map-fixed-style {
+  @apply w-[300px] h-auto;
+}
+
+
+.selected-region {
+  fill: #22c55e !important; /* Tailwind green-500 */
+}
+
+.pattern {
+  background-image: url("data:image/svg+xml,..."); /* 긴 URI 생략 */
+}
+
+.swiper-pagination {
+  bottom: -10px !important; /* 원하는 만큼 조절 (기본은 0~10px 정도) */
+}
+
+
+small {
+  font-size: 80%;
+}
+
+.swiper-pagination {
+  bottom: -8px !important;
+  top: auto !important;
+  text-align: center;
+}
+
+.swiper-pagination-bullet {
+  width: 45%;
+  height: 6px;
+  border-radius: 4px;
+  background-color: #cbd5e1; /* 비활성화 (gray-300) */
+  margin: 0 4px !important;
+  transition: background-color 0.3s ease;
+}
+
+.swiper-pagination-bullet-active {
+  background-color: #0ea5e9 !important; /* 활성화 색 (sky-500 등) */
+}

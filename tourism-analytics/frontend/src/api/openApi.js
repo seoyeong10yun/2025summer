@@ -1,0 +1,29 @@
+// src/api/openApi.js
+import axios from './axiosInstance';
+
+// ✅ 관광 방문 통계
+export const getTourVisitorStats = (params) =>
+  axios.get('/api/proxy/external-data', {
+    params: {
+      source: 'tourapi',
+      ...params,
+    },
+  });
+
+// ✅ 날씨 예보 API
+export const getWeatherForecast = (params) =>
+  axios.get('/api/proxy/external-data', {
+    params: {
+      source: 'weatherapi',
+      ...params,
+    },
+  });
+
+// ✅ 관광 수요 예측 API
+export const getTourPrediction = (params) =>
+  axios.get('/api/proxy/external-data', {
+    params: {
+      source: 'tourpreapi',
+      ...params,
+    },
+  });
