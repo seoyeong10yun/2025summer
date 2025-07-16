@@ -84,7 +84,7 @@ class Settings(BaseSettings):
     CACHE_TTL_EXTERNAL_API: int = 300  # 5분
     
     # 로깅 설정
-    LOG_LEVEL: str = "info"
+    LOG_LEVEL: str = "inf0"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     LOG_FILE_MAX_BYTES: int = 10 * 1024 * 1024  # 10MB
     LOG_FILE_BACKUP_COUNT: int = 5
