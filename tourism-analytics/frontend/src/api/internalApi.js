@@ -1,22 +1,30 @@
 import axios from './axiosInstance';
 
 // ✅ 관리자 로그인
-export const adminLogin = (data) =>
-  axios.post('/admin/login', data, {
-    withCredentials: true,
-  });
+export const adminLogin = (data) => {
+  const formData = new URLSearchParams();
+  formData.append('password', data.admin_password);
 
-// ✅ 관리자 로그아웃
-export const adminLogout = (sessionId) =>
-  axios.post('/admin/logout', { session_id: sessionId }, {
-    withCredentials: true,
+  return axios.post('/admin/login', formData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
   });
+};
 
 // ✅ 관리자 비밀번호 변경
-export const changeAdminPassword = (data) =>
-  axios.post("/admin/change-password", data, {
-    withCredentials: true  // ✅ 쿠키(session_id) 포함
+export const changeAdminPassword = (data) => {
+  const formData = new URLSearchParams();
+  formData.append('current_password', data.current_password);
+  formData.append('new_password', data.new_password);
+
+  return axios.post('/admin/change-password', formData, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
   });
+};
+
 
 // ✅ CSV 데이터 조회
 export const getCsvDetail = () =>

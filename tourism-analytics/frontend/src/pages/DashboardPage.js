@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ReactComponent as GyungnamMap } from '../assets/gyungnam-map.svg';
-import { regionNameFromSlug, regionXYAixMap , regionAreaIdMap} from '../assets/regionMap';
-import { Line, Pie, Bar as ChartBar } from 'react-chartjs-2';
+import { signguNameFromSlug, signguXYAixMap , signgureaIdMap} from '../assets/regionMap';
+import { Line, Bar as ChartBar } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {
   Chart as ChartJS,
@@ -13,22 +13,20 @@ import {
   LineElement,
   ArcElement,
   BarElement,
+  BubbleController,
   Tooltip as ChartTooltip,
   Legend,
   Filler,
 } from 'chart.js';
-import Papa from 'papaparse';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { handleApi } from '../api/handleApi';
-import { getCsvDetail } from '../api/internalApi';
 import { getTourVisitorStats } from '../api/openApi';
+import BubbleForceChart from '../components/BubbleForceChart'
 
 
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement,BarElement, ChartTooltip, Legend, Filler, ChartDataLabels);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement,BarElement, BubbleController, ChartTooltip, Legend, Filler, ChartDataLabels);
 
 
 
@@ -38,26 +36,26 @@ export default function DashboardPage() {
     return sessionStorage.getItem("introSeen") === "true";
   });
   
-  const [selectedRegion, setSelectedRegion] = useState(() => {
-    return sessionStorage.getItem("selectedRegion") || null;
+  const [selectedSigngu, setSelectedSigngu] = useState(() => {
+    return sessionStorage.getItem("selectedSigngu") || null;
   });
   
 
   // 값이 바뀔 때마다 세션에 저장
   useEffect(() => {
-    if (selectedRegion) {
-      sessionStorage.setItem("selectedRegion", selectedRegion);
+    if (selectedSigngu) {
+      sessionStorage.setItem("selectedSigngu", selectedSigngu);
     }
-  }, [selectedRegion]);
+  }, [selectedSigngu]);
 
   useEffect(() => {
-    const regionId = Object.keys(regionNameFromSlug).find(
-      (key) => regionNameFromSlug[key] === selectedRegion
+    const signguId = Object.keys(signguNameFromSlug).find(
+      (key) => signguNameFromSlug[key] === selectedSigngu
     );
-    if (regionId) {
-      document.querySelector(`svg path[id="${regionId}"]`)?.classList.add('selected');
+    if (signguId) {
+      document.querySelector(`svg path[id="${signguId}"]`)?.classList.add('selected');
     }
-  }, [selectedRegion]);
+  }, [selectedSigngu]);
   
 
   
@@ -104,8 +102,8 @@ export default function DashboardPage() {
 
   // 지도에서 지역을 선택하면 동작, 방문자 수 데이터에서 지역을 필터링 하고 현지인, 외지인, 외국인으로 나눠 그래프로 표시할 수 있도록 chartData로 저장
   useEffect(() => {
-    if (visitorData && selectedRegion) {
-      const matched = visitorData.filter(item => item.signguNm === selectedRegion);
+    if (visitorData && selectedSigngu) {
+      const matched = visitorData.filter(item => item.signguNm === selectedSigngu);
   
       // touDivNm 별로 touNum 합산
       const grouped = {};
@@ -123,7 +121,7 @@ export default function DashboardPage() {
   
       setFilteredChartData(chartData);  // 상태값으로 저장
     }
-  }, [visitorData, selectedRegion]);
+  }, [visitorData, selectedSigngu]);
 
 
   const labels = filteredChartData.map(item => item.touDivNm); // ex: 현지인, 외지인, 외국인
@@ -178,18 +176,18 @@ export default function DashboardPage() {
   // 지도에서 지역을 클릭 시 지역에 관한 날씨 조회 API 요청 (기온-하늘상태, 강수량-강수형태, 습도)
   useEffect(() => {
     const fetchUltraShortForecast = async () => {
-      if (!selectedRegion) return;
+      if (!selectedSigngu) return;
 
-      const regionXY = regionXYAixMap[selectedRegion];
-      if (!regionXY) return;
+      const signguXY = signguXYAixMap[selectedSigngu];
+      if (!signguXY) return;
 
       const now = new Date();
       now.setHours(now.getHours() - 1); // 1시간 이전으로 이동
       
       const baseDate = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
       const baseTime = `${String(now.getHours()).padStart(2, '0')}30`; // 항상 30분
-      const nx = regionXY.nx;
-      const ny = regionXY.ny;
+      const nx = signguXY.nx;
+      const ny = signguXY.ny;
 
       const serviceKey = process.env.REACT_APP_TOURISM_API_KEY;
       const url = '/weatherapi/getUltraSrtFcst';
@@ -215,7 +213,7 @@ export default function DashboardPage() {
     };
   
     fetchUltraShortForecast();
-  }, [selectedRegion]);  
+  }, [selectedSigngu]);  
 
   // api 응답중 강수형태와 하늘 상태는 문자열이 아닌 코드로 응답하여 따로 매칭해서 표시해줘야함.
   const handleClick = useCallback((category, label) => {
@@ -302,10 +300,10 @@ export default function DashboardPage() {
   
   
   useEffect(() => {
-    if (forecastData.length > 0 && selectedRegion) {
+    if (forecastData.length > 0 && selectedSigngu) {
       handleClick(selectedCategory, selectedLabel);
     }
-  }, [forecastData, selectedRegion, handleClick, selectedCategory, selectedLabel]);
+  }, [forecastData, selectedSigngu, handleClick, selectedCategory, selectedLabel]);
   
 
 
@@ -320,7 +318,7 @@ export default function DashboardPage() {
   
   useEffect(() => {
     const fetchLinkRateData = async () => {
-      if (!selectedRegion) return;
+      if (!selectedSigngu) return;
   
       const key = process.env.REACT_APP_TOURISM_API_KEY;
       const url = '/tourpreapi/tatsCnctrRatedList';
@@ -332,7 +330,7 @@ export default function DashboardPage() {
         MobileOS: 'ETC',
         MobileApp: 'AppTest',
         areaCd: 48,
-        signguCd: regionAreaIdMap[selectedRegion],
+        signguCd: signgureaIdMap[selectedSigngu],
         _type: 'json',
       };
   
@@ -350,7 +348,7 @@ export default function DashboardPage() {
     };
   
     fetchLinkRateData();
-  }, [selectedRegion]);
+  }, [selectedSigngu]);
   
   // ✅ 관광지 목록 (select용)
   const uniqueTourNames = [...new Set(items.map(item => item.tAtsNm))];
@@ -600,215 +598,46 @@ export default function DashboardPage() {
 
 
   // ---------------------------------------------------------------------------------------------------------------------------------
-  // 관광 소비 CSV 파일 시각화
+  // 버블 차트
   // ---------------------------------------------------------------------------------------------------------------------------------
-  const [gender, setGender] = useState('전체');
-  const [pieData, setPieData] = useState(null);
 
-  useEffect(() => {
-    const fetchCsv = async () => {
-      const { data, error } = await handleApi(getCsvDetail, {
-        region: selectedRegion,
-        category: '관광소비',
-        file: '성연령별.csv',
-      });
+  const bubbleData = [
+    { id: "서울", value: 80 },
+    { id: "부산", value: 50 },
+    { id: "대구", value: 30 },
+    { id: "광주", value: 120 },
+    { id: "제주", value: 10 },
+    { id: "인천", value: 40 },
+    { id: "울산", value: 25 },
+    { id: "세종", value: 15 },
+  ];
+  const bubbleKey = useMemo(
+    () => bubbleData.map(d => `${d.id}-${d.value}`).join(','),
+    [bubbleData]
+  );
   
-      if (error) return alert(error);
+  const memoizedBubbleData = useMemo(() => {
+    return [...bubbleData].sort((a, b) => b.value - a.value);
+  }, [bubbleKey]);
   
-      const parsed = Papa.parse(data, { header: true }).data;
-      const cleaned = parsed
-        .filter(row => row['소비자 연령'] && row['소비자 연령'] !== '_')
-        .sort((a, b) => parseInt(a['소비자 연령']) - parseInt(b['소비자 연령']));
-  
-      const labels = cleaned.map(row => row['소비자 연령']);
-      let values;
-  
-      if (gender === '전체') {
-        values = cleaned.map(row =>
-          (parseFloat(row['비율(남성)']) || 0) + (parseFloat(row['비율(여성)']) || 0)
-        );
-      } else {
-        values = cleaned.map(row =>
-          parseFloat(row[`비율(${gender})`]) || 0
-        );
-      }
-  
-      setPieData({
-        labels,
-        datasets: [
-          {
-            label: `${gender} 비율 (%)`,
-            data: values,
-            backgroundColor: [
-              '#93C5FD', '#A5F3FC', '#FDE68A', '#FCA5A5',
-              '#C4B5FD', '#FDBA74', '#6EE7B7', '#F9A8D4'
-            ],
-            borderWidth: 1,
-          },
-        ],
-      });
-    };
-  
-    if (selectedRegion) {
-      fetchCsv();
-    }
-  }, [gender, selectedRegion]);
-  
-  
-  
-  const pieOption={
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right',
-      },
-      datalabels: {
-        color: '#000', // 바깥쪽은 검정색이 잘 보임
-        formatter: (value, context) => {
-          const data = context.chart.data.datasets[0].data;
-          const total = data.reduce((a, b) => a + b, 0);
-          const percent = (value / total) * 100;
-          return percent > 2 ? `${percent.toFixed(1)}%` : ''; // 1% 이하는 아예 숨김
-        },
-        font: {
-          size: 14,
-          weight: 'bold',
-        },
-        anchor: (context) => {
-          const data = context.chart.data.datasets[0].data;
-          const value = data[context.dataIndex];
-          const total = data.reduce((a, b) => a + b, 0);
-          const percent = (value / total) * 100;
-          return percent < 5 ? 'end' : 'center'; // 작으면 바깥
-        },
-        align: (context) => {
-          const data = context.chart.data.datasets[0].data;
-          const value = data[context.dataIndex];
-          const total = data.reduce((a, b) => a + b, 0);
-          const percent = (value / total) * 100;
-          return percent < 2 ? 'end' : 'center'; // 작으면 바깥
-        },
-        offset: 8, // 바깥쪽 표시 시 거리
-        clip: false,
-      }
-    },
-    layout: {
-      padding: {
-        top: 20, // 윗쪽 공간 확보
-        bottom: 20,
-      },
-    },
-  };
+    // const [bubbleData, setBubbleData] = useState([]);
+
+  // useEffect(() => {
+  //   if (!selectedSigngu) return;
+
+  //   const fetchData = async () => {
+  //     try {
+  //       const res = await axios.get(`/api/bubble?signgu=${selectedSigngu}`);
+  //       setBubbleData(res.data);
+  //     } catch (e) {
+  //       console.error('버블 데이터 에러:', e);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, [selectedSigngu]);  
 
 
-  // ---------------------------------------------------------------------------------------------------------------------------------
-  // 외국인 관광 소비 CSV 파일 시각화
-  // ---------------------------------------------------------------------------------------------------------------------------------
-  const [chartData3, setChartData3] = useState(null);
-
-  useEffect(() => {
-    if (!selectedRegion) return;
-
-    fetch(`/data/${selectedRegion}/관광소비/외국인.csv`)
-      .then((res) => res.text())
-      .then((text) => {
-        const parsed = Papa.parse(text, { header: true }).data;
-
-        // 국가명과 소비 비율 추출 + 유효성 필터링
-        const labels = [];
-        const values = [];
-
-        parsed.forEach((row) => {
-          const country = row['국가']?.trim();
-          const percent = parseFloat(row['소비 비율(%)']);
-          if (country && !isNaN(percent)) {
-            labels.push(country);
-            values.push(percent);
-          }
-        });
-
-        const topLabels = labels.slice(0, 10);
-        const topValues = values.slice(0, 10);
-
-        setChartData3({
-          labels: topLabels,
-          datasets: [
-            {
-              label: '소비 비율 (%)',
-              data: topValues,
-              backgroundColor: [
-                '#f87171', // ✅ 1순위: 빨간색
-                '#60a5fa',
-                '#60a5fa',
-                '#60a5fa',
-                '#60a5fa',
-                '#60a5fa',
-                '#60a5fa',
-                '#60a5fa',
-                '#60a5fa',
-                '#60a5fa',
-              ],
-              borderRadius: 6,
-            },
-          ],
-        });
-      });
-  }, [selectedRegion]);
-
-  const rawMax = chartData3 ? Math.max(...chartData3.datasets[0].data) : 0;
-  const paddedMax = rawMax+3;
-  const roundedMax = Math.ceil(paddedMax / 5) * 5;
-
-  const options3 = {
-    indexAxis: 'y', // ✅ 수평 막대
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      datalabels: {
-        anchor: 'end',
-        align: 'right',
-        formatter: (value) => `${value}%`,
-        color: '#000',
-        font: { size: 12, weight: 'bold' },
-        clip: false,
-      },
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (context) => `${context.label}: ${context.parsed.x}%`,
-        },
-      },
-    },
-    scales: {
-      x: {
-        max: roundedMax,
-        title: {
-          display: true,
-          text: '소비 비율 (%)',
-        },
-        ticks: {
-          stepSize: 5,
-        },
-        grid: {
-          display: false, // ✅ 격자무늬 제거
-        },
-      },
-      y: {
-        title: {
-          display: false,
-        },
-        grid: {
-          display: false, // ✅ 격자무늬 제거
-        },
-      },
-    },
-  };
-  
-
-  
-
-  
   
   
   // ---------------------------------------------------------------------------------------------------------------------------------
@@ -865,9 +694,9 @@ export default function DashboardPage() {
                         el.classList.remove('selected');
                       });
 
-                      const regionId = pathEl.getAttribute('id');
-                      if (regionId) {
-                        setSelectedRegion(regionNameFromSlug[regionId] || regionId);
+                      const signguId = pathEl.getAttribute('id');
+                      if (signguId) {
+                        setSelectedSigngu(signguNameFromSlug[signguId] || signguId);
                       }
                     }
                   }}
@@ -880,7 +709,7 @@ export default function DashboardPage() {
             <div class="p-6 flex flex-col min-w-0 mb-4 lg:mb-0 break-words bg-gray-50 dark:bg-gray-800 w-full shadow-lg rounded">
               <div className="h-full rounded-t mb-0 px-0 border-0 bg-white">
                 <div className="h-full bg-white p-4">
-                  <h2 className="text-xl font-semibold mb-2">📍 {selectedRegion} 방문자 데이터</h2>
+                  <h2 className="text-xl font-semibold mb-2">📍 {selectedSigngu} 방문자 데이터</h2>
                   {filteredChartData.length > 0 && (
                     <div className='p-4' style={{width: "100%" ,height: "90%"}}>
                       <ChartBar data={chartData} options={options} />
@@ -919,47 +748,11 @@ export default function DashboardPage() {
             </div>
 
             {/* 기타 정보 */}
-            <div class="p-6 flex flex-col min-w-0 mb-4 lg:mb-0 break-words bg-gray-50 dark:bg-gray-800 w-full shadow-lg rounded">
-              <div className="h-full rounded-t mb-4 px-0 border-0 bg-white">
-
-                <Swiper
-                  spaceBetween={30}
-                  pagination={{ clickable: true }}
-                  modules={[Pagination]}
-                  loop={false}
-                  autoHeight={false}
-                  style={{ height: '100%' }}
-                >   
-                  <SwiperSlide>
-                    <div className="flex items-center justify-between mb-2">
-                      <h2 className="text-xl font-bold">소비자 연령 분포</h2>
-                      <select
-                        className="border rounded px-2 py-1"
-                        value={gender}
-                        onChange={(e) => setGender(e.target.value)}
-                      >
-                        <option value="전체">전체</option>
-                        <option value="남성">남성</option>
-                        <option value="여성">여성</option>
-                      </select>
-                    </div>
-                    <div className="flex justify-center items-center mt-2" style={{ width: '100%', height: '87%' }}>
-                      {pieData ? <Pie data={pieData} options={pieOption} /> : <p>로딩 중...</p>}
-                    </div>
-                  </SwiperSlide>
-
-                  <SwiperSlide>
-                    <h2 className="text-lg font-semibold">외국인 소비 국가별 순위 (top10)</h2>
-                    {chartData3 ? (
-                      <div className="mt-2 pr-10" style={{ width: '100%', height: '87%' }}>
-                        <ChartBar data={chartData3} options={options3} />
-                      </div>
-                    ) : (
-                      <p>로딩 중...</p>
-                    )}
-                  </SwiperSlide>
-                </Swiper>
-              </div>
+            <div className="p-6 flex flex-col bg-white w-full shadow-lg rounded">
+              <h2 className="text-xl font-semibold mb-2 text-center">🎈 지역별 방문 분포</h2>
+              {memoizedBubbleData.length > 0 && (
+                <BubbleForceChart data={memoizedBubbleData} />
+              )}
             </div>
           </div>
         </div>

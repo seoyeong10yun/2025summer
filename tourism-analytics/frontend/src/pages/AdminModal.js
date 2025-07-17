@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { handleApi } from '../api/handleApi';
-import { adminLogin, adminLogout, changeAdminPassword, uploadCsv, uploadPdf } from '../api/internalApi';
+import { adminLogin, changeAdminPassword, uploadCsv, uploadPdf } from '../api/internalApi';
 
 export default function AdminModal({ isOpen, onClose }) {
   const [password, setPassword] = useState('');
@@ -19,10 +19,9 @@ export default function AdminModal({ isOpen, onClose }) {
 
   const handleLogin = async () => {
     const { data, error } = await handleApi(adminLogin, { admin_password: password });
-
+    console.log(data);
+    
     if (error) return alert(error);
-
-    localStorage.setItem("session_id", data.session_id);
     setIsAuthenticated(true);
   };
 
@@ -279,19 +278,12 @@ export default function AdminModal({ isOpen, onClose }) {
               <button
                 onClick={async () => {
                   // 로그아웃 API 요청
-                  const sessionId = localStorage.getItem("session_id");
-                  const { error } = await handleApi(adminLogout, sessionId);
-
-                  if (error) {
-                    alert(error); // 실패하더라도 모달은 닫음
-                  }
 
                   // 상태 초기화
                   setIsAuthenticated(false);
                   setPassword('');
                   setFile(null);
                   setIsResetMode(false);
-                  localStorage.removeItem("session_id");
 
                   // 모달 닫기
                   onClose();
