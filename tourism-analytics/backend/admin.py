@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Form
 import bcrypt
 from pathlib import Path
-import os
 
 # 설정
 BACKEND_DIR=Path(__file__).resolve().parent
