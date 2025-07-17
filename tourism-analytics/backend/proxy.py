@@ -1,8 +1,9 @@
-import os
+import os, requests
 from dotenv import load_dotenv
 from fastapi import APIRouter, Request, Response
-import requests
+from urllib.parse import parse_qs, urlencode
 
+router = APIRouter()
 load_dotenv()
 
 API_BASES = {
@@ -11,7 +12,12 @@ API_BASES = {
     "tour_data": os.getenv("TOUR_DATALAB_API_BASE"),
 }
 
-router = APIRouter()
+API_KEY = os.getenv("PUBLIC_DATA_API_KEY")
+API_KEY_PARAMS = {
+    "weather": "ServiceKey",
+    "tour_predict": "serviceKey",
+    "tour_data": "serviceKey",
+}
 
 @router.api_route(
     "/proxy/{target}/{path:path}",
@@ -29,10 +35,17 @@ async def proxy(request: Request, target: str, path: str):
     headers = dict(request.headers)
     body = await request.body()
 
-    # 외부 API URL 조립
-    url = f"{base_url}/{path}"
-    if query_string:
-        url += f"?{query_string}"
+    # 쿼리 파라미터 파싱
+    url_path = f"{base_url}/{path}"
+    query = parse_qs(query_string)
+
+    # API key 쿼리 파라미터 추가
+    api_key_param = API_KEY_PARAMS[target]
+    if api_key_param not in query:
+        query[api_key_param] = [API_KEY]
+    # 쿼리문자열 다시 생성
+    full_query = urlencode(query, doseq=True)
+    url = f"{url_path}?{full_query}" if full_query else url_path
 
     # 외부 API 호출
     response = requests.request(
