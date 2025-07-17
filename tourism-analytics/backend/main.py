@@ -1,3 +1,4 @@
+# pip install fastapi bcrypt pymupdf openai python-dotenv requests
 from fastapi import FastAPI
 import admin, data, report
 
