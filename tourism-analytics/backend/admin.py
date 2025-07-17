@@ -4,8 +4,10 @@ from pathlib import Path
 import os
 
 # 설정
-CREDENTIALS_DIR = Path(os.getenv("CREDENTIALS_DIR", "storage/credentials"))
+BACKEND_DIR=Path(__file__).resolve().parent
+CREDENTIALS_DIR = BACKEND_DIR/"credentials"
 CREDENTIALS_DIR.mkdir(parents=True, exist_ok=True)
+
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 @router.post("/login")
@@ -93,5 +95,4 @@ def update_password(new_password: str) -> bool:
             
         return True
     except Exception as e:
-        logger.error(f"Error updating password: {e}")
         return False
