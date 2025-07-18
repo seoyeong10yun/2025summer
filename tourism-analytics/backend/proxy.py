@@ -1,6 +1,8 @@
 import os, requests
 from dotenv import load_dotenv
-from fastapi import APIRouter, Request, Response
+from fastapi import (
+    APIRouter, Request, Response, HTTPException, status
+)
 from urllib.parse import parse_qs, urlencode
 
 router = APIRouter()
@@ -26,7 +28,10 @@ API_KEY_PARAMS = {
 async def proxy(request: Request, target: str, path: str):
     # 타겟 검증
     if target not in API_BASES:
-        return Response(content="Invalid target", status_code=400)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid target"
+        )
     base_url = API_BASES[target]
 
     # 요청 정보 추출
@@ -41,9 +46,13 @@ async def proxy(request: Request, target: str, path: str):
 
     # API key 쿼리 파라미터 추가
     api_key_param = API_KEY_PARAMS[target]
-    if api_key_param not in query:
-        query[api_key_param] = [API_KEY]
-    # 쿼리문자열 다시 생성
+    if api_key_param in query:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Do not include API key"
+        )
+    query[api_key_param] = [API_KEY]
+    # 쿼리 문자열 다시 생성
     full_query = urlencode(query, doseq=True)
     url = f"{url_path}?{full_query}" if full_query else url_path
 
