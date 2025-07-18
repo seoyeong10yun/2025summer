@@ -80,11 +80,19 @@ export default function DashboardPage() {
     };
   
     const endYmd = formatDate(oneMonthAgo);  
+    const serviceKey = process.env.REACT_APP_TOURISM_API_KEY;
+    
   
     const fetchTourismData = async () => {
       const { data, error } = await handleApi(getTourVisitorStats, {
-        filter: `startYmd=20240615&endYmd=20240615&MobileOS=ETC&MobileApp=AppTest`,
-        limit: 1000,
+        serviceKey: serviceKey,
+        MobileOS: 'ETC',
+        MobileApp: 'AppTest',
+        _type: 'json',
+        startYmd: endYmd,
+        endYmd: endYmd,
+        numOfRows: 1000,
+        pageNo: 1,
       });
     
       if (error) {
@@ -92,8 +100,11 @@ export default function DashboardPage() {
         return;
       }
     
-      setVisitorData(data.data); // 백엔드 응답 구조에 맞게 data.data
+      // 공공 API 응답 구조에 따라 처리
+      setVisitorData(data.response.body.items.item);
     };
+    
+    
   
     fetchTourismData();
   }, []);
