@@ -77,7 +77,7 @@ async def generate_report():
 
 
 # 리포트 조회
-@router.get("/")
+@router.get("")
 async def get_latest_report():
     """
     현재 저장된 리포트 반환
