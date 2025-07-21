@@ -97,5 +97,5 @@ async def query_data(
         "success":True,
         "region":region,
         "year-on-year": month_col,
-        "places": result
+        "places": result[0:20]
     }
