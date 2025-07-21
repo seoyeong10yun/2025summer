@@ -1,4 +1,4 @@
-# pip install fastapi bcrypt pymupdf openai python-dotenv requests uvicorn
+# pip install fastapi bcrypt pymupdf openai python-dotenv requests uvicorn xlrd pandas
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import admin, data, report, proxy
