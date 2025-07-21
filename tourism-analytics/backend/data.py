@@ -58,7 +58,7 @@ async def query_data(
     
     
     # 군구 필터링 및 합계 검색
-    if '군구' not in df.columns or '내/외국인' not in df.columns:
+    if '군구' not in df.columns and '내/외국인' not in df.columns:
         raise HTTPException(status_code=500, detail="필수 컬럼(군구, 내/외국인)이 누락되어 있습니다.")
     
     filtered_places=df[(df['군구']==region)&(df['내/외국인']=='합계')].copy()
@@ -88,10 +88,19 @@ async def query_data(
     sorted_places=filtered_places.sort_values(by=month_col,ascending=False)
     
     # dataframe 로우명 설정
-    result=sorted_places.apply(lambda row: {
-        "name": row['관광지'],
-        "visitors": row[month_col]
-    },axis=1).tolist()
+    result=[]
+    for _, row in sorted_places.iterrows():
+        if pd.isna(row[month_col]):
+            continue
+        result.append({
+            "name": row["관광지"],
+            "visitors": int(row[month_col])
+        })
+        
+    # result=sorted_places.apply(lambda row: {
+    #     "name": row['관광지'],
+    #     "visitors": row[month_col]
+    # },axis=1).tolist()
     
     return{
         "success":True,
