@@ -76,7 +76,8 @@ async def proxy(request: Request, target: str, path: str):
             if k.lower() not in [  # HTTP 계층 정보 제외하여 복사(응답 오류/중복 방지)
                 "content-encoding",
                 "transfer-encoding",
-                "connection"
+                "connection",
+                "content-length"
             ]
         }
     )

@@ -26,38 +26,49 @@ export const changeAdminPassword = (data) => {
 };
 
 
-// ✅ CSV 데이터 조회
-export const getCsvDetail = () =>
-  axios.get('/data/csv/current');
+// ✅ xls 데이터 조회
+export const fetchTouristQuery = (region) =>
+  axios.get('/data/query', {
+    params: { region },
+  });
 
-// ✅ CSV 업로드
-export const uploadCsv = (formData, selectedRegion) => {
-  formData.append('region', selectedRegion);
 
-  return axios.post('/admin/csv/upload', formData, {
+// ✅ 엑셀 파일 업로드 API
+export const uploadExcelFile = (file) => {
+  const formData = new FormData();
+  formData.append('file', file); // 필드명은 백엔드의 UploadFile 파라미터와 같아야 함
+
+  return axios.post('/data/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
 };
 
-// ✅ Pdf 업로드
-export const uploadPdf = (formData, selectedRegion) => {
-  formData.append('region', selectedRegion);
-
-  return axios.post('/admin/pdf/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-};
 
 // ✅ CSV 파일 삭제
 export const deleteCsv = (filename) =>
   axios.delete(`/csv/${filename}`);
 
 
-// ✅ AI 리포트 상세 조회
-export const getAiReport = () =>
-  axios.get('/reports');
+// ✅ 리포트 PDF 업로드
+export const uploadReportSource = (file) => {
+  const formData = new FormData();
+  formData.append('file', file); // 필드명 주의!
 
+  return axios.post('/report/source', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+// ✅ AI 리포트 생성 API
+export const generateReport = () => {
+  return axios.post('/report/generate'); // 빈 POST 요청
+};
+
+// ✅ AI 리포트 조회 API
+export const fetchReport = () => {
+  return axios.get('/report'); // 리포트 JSON을 가져오는 GET 요청
+};

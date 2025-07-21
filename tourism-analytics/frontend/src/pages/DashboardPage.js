@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ReactComponent as GyungnamMap } from '../assets/gyungnam-map.svg';
@@ -21,14 +20,21 @@ import {
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { handleApi } from '../api/handleApi';
-import { getTourVisitorStats } from '../api/openApi';
-import BubbleForceChart from '../components/BubbleForceChart'
+import { getTourVisitorStats, getWeatherForecast, getTourPrediction } from '../api/openApi';
+import { fetchTouristQuery } from '../api/internalApi';
+import Chart from "react-google-charts";
 
 
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement,BarElement, BubbleController, ChartTooltip, Legend, Filler, ChartDataLabels);
 
-
+const changwonAreas = [
+  '창원시 마산합포구',
+  '창원시 마산회원구',
+  '창원시 성산구',
+  '창원시 의창구',
+  '창원시 진해구',
+];
 
 
 export default function DashboardPage() {  
@@ -80,12 +86,9 @@ export default function DashboardPage() {
     };
   
     const endYmd = formatDate(oneMonthAgo);  
-    const serviceKey = process.env.REACT_APP_TOURISM_API_KEY;
-    
-  
+
     const fetchTourismData = async () => {
       const { data, error } = await handleApi(getTourVisitorStats, {
-        serviceKey: serviceKey,
         MobileOS: 'ETC',
         MobileApp: 'AppTest',
         _type: 'json',
@@ -186,7 +189,9 @@ export default function DashboardPage() {
 
   // 지도에서 지역을 클릭 시 지역에 관한 날씨 조회 API 요청 (기온-하늘상태, 강수량-강수형태, 습도)
   useEffect(() => {
-    const fetchUltraShortForecast = async () => {
+
+    const fetchTourismData = async () => {
+
       if (!selectedSigngu) return;
 
       const signguXY = signguXYAixMap[selectedSigngu];
@@ -199,12 +204,9 @@ export default function DashboardPage() {
       const baseTime = `${String(now.getHours()).padStart(2, '0')}30`; // 항상 30분
       const nx = signguXY.nx;
       const ny = signguXY.ny;
-
-      const serviceKey = process.env.REACT_APP_TOURISM_API_KEY;
-      const url = '/weatherapi/getUltraSrtFcst';
-
-      const params = {
-        serviceKey,
+      
+      
+      const { data, error } = await handleApi(getWeatherForecast, {
         pageNo: '1',
         numOfRows: '100',
         dataType: 'JSON',
@@ -212,18 +214,19 @@ export default function DashboardPage() {
         base_time: baseTime,
         nx,
         ny,
-      };
-  
-      try {
-        const response = await axios.get(url, { params });
-        const items = response.data.response.body.items.item;
-        setForecastData(items);
-      } catch (err) {
-        console.error('초단기예보 호출 실패:', err);
+      });
+
+    
+      if (error) {
+        console.error(error);
+        return;
       }
+    
+      // 공공 API 응답 구조에 따라 처리
+      setForecastData(data.response.body.items.item);
     };
   
-    fetchUltraShortForecast();
+    fetchTourismData();
   }, [selectedSigngu]);  
 
   // api 응답중 강수형태와 하늘 상태는 문자열이 아닌 코드로 응답하여 따로 매칭해서 표시해줘야함.
@@ -265,7 +268,6 @@ export default function DashboardPage() {
       const ptyItems = data.filter(item => item.category === 'PTY');
       result = targetItems.map(item => {
         const time = `${item.fcstTime.slice(0, 2)}:${item.fcstTime.slice(2, 4)}`;
-        console.log(item);
         const ptyItem = ptyItems.find(p => p.fcstTime === item.fcstTime);
         const ptyText = ptyItem ? ptyCodeMap[ptyItem.fcstValue] : '';
         console.log(item)
@@ -328,14 +330,12 @@ export default function DashboardPage() {
   const [selectedTourName, setSelectedTourName] = useState('');
   
   useEffect(() => {
+
+
     const fetchLinkRateData = async () => {
       if (!selectedSigngu) return;
-  
-      const key = process.env.REACT_APP_TOURISM_API_KEY;
-      const url = '/tourpreapi/tatsCnctrRatedList';
-  
-      const params = {
-        serviceKey: key,
+      
+      const { data, error } = await handleApi(getTourPrediction, {
         numOfRows: 6000,
         pageNo: 1,
         MobileOS: 'ETC',
@@ -343,19 +343,20 @@ export default function DashboardPage() {
         areaCd: 48,
         signguCd: signgureaIdMap[selectedSigngu],
         _type: 'json',
-      };
-  
-      try {
-        const res = await axios.get(url, { params });
-        const data = res.data.response.body.items?.item || [];
-  
-        if (data.length > 0) {
-          setItems(data); // ✅ 원본 저장
-          setSelectedTourName(data[0].tAtsNm); // ✅ 초기 선택값 설정
-        }
-      } catch (err) {
-        console.error('추이예측 API 호출 실패:', err);
+      });
+    
+      if (error) {
+        console.error(error);
+        return;
       }
+      
+      const res = data.response.body.items?.item || [];
+
+      if (res.length > 0) {
+        setItems(res); // ✅ 원본 저장
+        setSelectedTourName(res[0].tAtsNm); // ✅ 초기 선택값 설정
+      }
+    
     };
   
     fetchLinkRateData();
@@ -612,42 +613,54 @@ export default function DashboardPage() {
   // 버블 차트
   // ---------------------------------------------------------------------------------------------------------------------------------
 
-  const bubbleData = [
-    { id: "서울", value: 80 },
-    { id: "부산", value: 50 },
-    { id: "대구", value: 30 },
-    { id: "광주", value: 120 },
-    { id: "제주", value: 10 },
-    { id: "인천", value: 40 },
-    { id: "울산", value: 25 },
-    { id: "세종", value: 15 },
+  const [bubbleData, setBubbleData] = useState([]);
+
+  
+  const resolvedRegion = useMemo(() => {
+    return changwonAreas.includes(selectedSigngu) ? '통합창원시' : selectedSigngu;
+  }, [selectedSigngu]);
+  
+  useEffect(() => {
+    if (!resolvedRegion) return;
+  
+    const fetchData = async () => {
+      const { data, error } = await handleApi(fetchTouristQuery, resolvedRegion);
+      if (error) {
+        alert(error);
+      } else {
+        setBubbleData(data.places);
+      }
+    };
+  
+    fetchData();
+  }, [resolvedRegion]);
+  
+  const rootLabel = `${resolvedRegion} 작년 동월 관광지 방문 분포`;
+  
+  const chartData4 = [
+    ["Location", "Parent", "Visitors"],
+    [rootLabel, null, 0], // 루트 노드
+    ...bubbleData.map(d => [d.name, rootLabel, d.visitors]),
   ];
-  const bubbleKey = useMemo(
-    () => bubbleData.map(d => `${d.id}-${d.value}`).join(','),
-    [bubbleData]
-  );
-  
-  const memoizedBubbleData = useMemo(() => {
-    return [...bubbleData].sort((a, b) => b.value - a.value);
-  }, [bubbleKey]);
-  
-    // const [bubbleData, setBubbleData] = useState([]);
 
-  // useEffect(() => {
-  //   if (!selectedSigngu) return;
-
-  //   const fetchData = async () => {
-  //     try {
-  //       const res = await axios.get(`/api/bubble?signgu=${selectedSigngu}`);
-  //       setBubbleData(res.data);
-  //     } catch (e) {
-  //       console.error('버블 데이터 에러:', e);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [selectedSigngu]);  
-
+  const options4 = {
+    minColor: "#e0f7fa",
+    midColor: "#80deea",
+    maxColor: "#00796b",
+    headerHeight: 20,
+    fontColor: "black",
+    generateTooltip: (row) => {
+      return `
+        <div style="background:#ffffff; padding:5px; border-style:solid">
+          <span style="font-family:Courier">
+            <b>${chartData4[row + 1][0]}</b><br/>
+            방문자 수: ${chartData4[row + 1][2].toLocaleString()}명
+          </span><br/>
+        </div>
+      `;
+    },
+    // showScale: true,
+  };
 
   
   
@@ -760,10 +773,28 @@ export default function DashboardPage() {
 
             {/* 기타 정보 */}
             <div className="p-6 flex flex-col bg-white w-full shadow-lg rounded">
-              <h2 className="text-xl font-semibold mb-2 text-center">🎈 지역별 방문 분포</h2>
-              {memoizedBubbleData.length > 0 && (
-                <BubbleForceChart data={memoizedBubbleData} />
+              <div className="flex-1 min-h-0">
+              {chartData4.length > 1 ? (
+                <Chart
+                  chartType="TreeMap"
+                  width="100%"
+                  height="100%"
+                  data={chartData4}
+                  options={options4}
+                  chartEvents={[
+                    {
+                      eventName: "select",
+                      callback: ({ chartWrapper }) => {
+                        const chart = chartWrapper.getChart();
+                        chart.setSelection([]);
+                      },
+                    },
+                  ]}
+                />
+              ) : (
+                <p>로딩 중...</p>
               )}
+              </div>
             </div>
           </div>
         </div>

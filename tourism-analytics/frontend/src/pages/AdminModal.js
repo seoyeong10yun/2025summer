@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { handleApi } from '../api/handleApi';
-import { adminLogin, changeAdminPassword, uploadCsv, uploadPdf } from '../api/internalApi';
+import { adminLogin, changeAdminPassword, uploadExcelFile, uploadReportSource, generateReport } from '../api/internalApi';
 
 export default function AdminModal({ isOpen, onClose }) {
   const [password, setPassword] = useState('');
@@ -9,10 +9,8 @@ export default function AdminModal({ isOpen, onClose }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const [file, setFile] = useState(null);
-  const [showRegionModal, setShowRegionModal] = useState(false);
-  const [uploadData, setUploadData] = useState(null); // 파일 formData
-  const [regionToUpload, setRegionToUpload] = useState(''); // 모달 내 지역 선택값
-  
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isReadingFile, setIsReadingFile] = useState(false);
 
 
   
@@ -46,9 +44,13 @@ export default function AdminModal({ isOpen, onClose }) {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0]; // 사용자가 선택한 파일
-    if (selectedFile) {
-      setFile(selectedFile); // 상태에 저장 → 나중에 업로드할 때 사용
-    }
+    setIsReadingFile(true); // ✅ 로딩 시작
+
+    // 여기서 파일을 직접 읽지 않더라도, 약간의 시간 대기
+    setTimeout(() => {
+      setFile(selectedFile); // ✅ 파일 상태 설정
+      setIsReadingFile(false); // ✅ 로딩 끝
+    }, 100); // 아주 짧게 처리 (또는 실제 FileReader 쓴다면 완료 시점에 false)
   };
 
   const handleUpload = async () => {
@@ -57,20 +59,32 @@ export default function AdminModal({ isOpen, onClose }) {
     const ext = file.name.split('.').pop().toLowerCase();
     const formData = new FormData();
     formData.append('file', file);
+
+    const confirmUpload = window.confirm(`.${ext} 파일을 업로드하시겠습니까?`);
+    if (!confirmUpload) return;
   
-    if (ext === 'csv') {
-      // ✅ 지역 선택 모달 무조건 표시
-      setUploadData(formData);
-      setShowRegionModal(true);
-      return;
+    if (ext === 'xls') {
+      const { error } = await handleApi(uploadExcelFile, file);
+      if (error) return alert(error);
+
+      alert(`업로드 성공`);
     }
   
     if (ext === 'pdf') {
-      const { error } = await handleApi(uploadPdf, formData);
-      if (error) return alert(error);
+      const { error: uploadError } = await handleApi(uploadReportSource, file);
+      if (uploadError) return alert(uploadError);
   
-      alert('업로드 성공');
-      setFile(null);
+      setIsGenerating(true); // ⏳ 리포트 생성 시작
+  
+      try {
+        const { error: generateError } = await handleApi(generateReport);
+        if (generateError) return alert(generateError);
+  
+        alert('업로드 및 리포트 생성 성공');
+        setFile(null);
+      } finally {
+        setIsGenerating(false); // ✅ 리포트 생성 끝
+      }
     }
   };
   
@@ -180,80 +194,16 @@ export default function AdminModal({ isOpen, onClose }) {
                 <input
                   id="file-upload"
                   type="file"
-                  accept=".csv, .pdf"
+                  accept=".xls, .pdf"
                   className="hidden"
                   onChange={handleFileChange}
                 />
-
-{showRegionModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded shadow-lg">
-      <h2 className="text-lg font-semibold mb-4">업로드할 지역을 선택하세요</h2>
-
-      <select
-        value={regionToUpload}
-        onChange={(e) => setRegionToUpload(e.target.value)}
-        className="border rounded px-3 py-2 mb-4 w-full"
-      >
-        <option value="">지역 선택</option>
-        <option value="거창군">거창군</option>
-        <option value="거제시">거제시</option>
-        <option value="고성군">고성군</option>
-        <option value="김해시">김해시</option>
-        <option value="남해군">남해군</option>
-        <option value="밀양시">밀양시</option>
-        <option value="사천시">사천시</option>
-        <option value="산청군">산청군</option>
-        <option value="양산시">양산시</option>
-        <option value="의령군">의령군</option>
-        <option value="진주시">진주시</option>
-        <option value="창녕군">창녕군</option>
-        <option value="창원시 마산합포구">마산합포구</option>
-        <option value="창원시 마산회원구">마산회원구</option>
-        <option value="창원시 성산구">성산구</option>
-        <option value="창원시 의창구">의창구</option>
-        <option value="창원시 진해구">진해구</option>
-        <option value="통영시">통영시</option>
-        <option value="하동군">하동군</option>
-        <option value="함안군">함안군</option>
-        <option value="함양군">함양군</option>
-        <option value="합천군">합천군</option>
-      </select>
-
-      <div className="flex justify-end gap-2">
-        <button
-          className="px-4 py-2 bg-gray-300 rounded"
-          onClick={() => {
-            setShowRegionModal(false);
-            setRegionToUpload('');
-            setUploadData(null);
-          }}
-        >
-          취소
-        </button>
-
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-          onClick={async () => {
-            if (!regionToUpload) return alert('지역을 선택해주세요');
-
-            const { error } = await handleApi(uploadCsv, uploadData, regionToUpload);
-            if (error) return alert(error);
-
-            alert('업로드 성공');
-            setShowRegionModal(false);
-            setUploadData(null);
-            setRegionToUpload('');
-            setFile(null);
-          }}
-        >
-          업로드
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+                
+                {isReadingFile && (
+                  <div className="mt-4 text-sm text-center text-blue-600 font-semibold">
+                    ⏳ 파일 처리 중...
+                  </div>
+                )}
 
                 {/* ✅ 파일명 + 삭제 버튼 */}
                 {file && (
@@ -269,11 +219,21 @@ export default function AdminModal({ isOpen, onClose }) {
                 )}
 
               </div>
-              <div
-                className="text-center text-white bg-indigo-800 py-4 rounded mb-4 cursor-pointer hover:bg-indigo-700 transition"
-                onClick={handleUpload}
-              >
-                <h3 className="text-xl font-bold">파일 업로드</h3>
+              {/* 버튼 2개: PDF / XLS 업로드 */}
+              <div className="flex gap-4">
+                <div
+                  className="flex-1 flex items-center justify-center text-center text-white bg-indigo-800 py-4 rounded mb-4 cursor-pointer hover:bg-indigo-700 transition"
+                  onClick={isGenerating ? undefined : handleUpload} // 생성 중 클릭 방지
+                >
+                  {isGenerating ? '리포트 생성 중...' : '📄 PDF 업로드'}
+                </div>
+
+                <div
+                  className="flex-1 flex items-center justify-center text-center text-white bg-indigo-800 py-4 rounded mb-4 cursor-pointer hover:bg-indigo-700 transition"
+                  onClick={isGenerating ? undefined : handleUpload} // 생성 중 클릭 방지
+                >
+                  {isGenerating ? '리포트 생성 중...' : '📊 XLS 업로드'}
+                </div>
               </div>
               <button
                 onClick={async () => {

@@ -145,7 +145,7 @@ export default function MainLayout() {
                   <ProvinceComponent className="w-auto h-auto max-w-[800px]" />
                 ) : (
                   <div className="text-center text-gray-600 text-sm mt-4">
-                    ❗ 아직 추가되지 않은 지역입니다.<br />
+                    ❗ 서비스 준비중입니다.<br />
                     <strong>현재 가능한 지역: {Object.keys(AVAILABLE_PROVINCE_COMPONENTS).join(', ')}</strong>
                   </div>
                 )}
