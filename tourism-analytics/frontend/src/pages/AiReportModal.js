@@ -52,6 +52,8 @@ const AiReportModal = ({ isOpen, onClose }) => {
 
   // 🔧 마크다운 텍스트 파싱 (불릿 항목 + 강조 처리)
   const parseBulletText = (text) => {
+    if (!text || typeof text !== 'string') return null;
+    
     return text
       .split('\n')
       .filter(line => line.trim().startsWith('-'))
