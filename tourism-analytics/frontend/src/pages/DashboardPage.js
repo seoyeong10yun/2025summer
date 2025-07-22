@@ -642,25 +642,43 @@ export default function DashboardPage() {
     [rootLabel, null, 0], // 루트 노드
     ...bubbleData.map(d => [d.name, rootLabel, d.visitors]),
   ];
+// 👇 트리맵 관련 state 추가
+const [hoverInfo, setHoverInfo] = useState(null);
 
-  const options4 = {
-    minColor: "#e0f7fa",
-    midColor: "#80deea",
-    maxColor: "#00796b",
-    headerHeight: 20,
-    fontColor: "black",
-    generateTooltip: (row) => {
-      return `
-        <div style="background:#ffffff; padding:5px; border-style:solid">
-          <span style="font-family:Courier">
-            <b>${chartData4[row + 1][0]}</b><br/>
-            방문자 수: ${chartData4[row + 1][2].toLocaleString()}명
-          </span><br/>
-        </div>
-      `;
+const chartEvents = [
+  {
+    eventName: 'onmouseover',
+    callback: ({ chartWrapper, event }) => {
+      const chart = chartWrapper.getChart();
+      const selection = chart.getSelection();
+      if (selection.length > 0) {
+        const row = selection[0].row;
+        if (row !== null) {
+          const data = chartData4[row + 1];
+          setHoverInfo({
+            name: data[0],
+            value: data[2],
+            x: event.clientX,
+            y: event.clientY,
+          });
+        }
+      }
     },
-    // showScale: true,
-  };
+  },
+  {
+    eventName: 'onmouseout',
+    callback: () => setHoverInfo(null),
+  },
+];
+
+const options4 = {
+  minColor: "#e0f7fa",
+  midColor: "#80deea",
+  maxColor: "#00796b",
+  headerHeight: 20,
+  fontColor: "black",
+  // ✅ generateTooltip 제거함
+};
 
   
   
@@ -772,34 +790,40 @@ export default function DashboardPage() {
             </div>
 
             {/* 기타 정보 */}
-            <div className="p-6 flex flex-col bg-white w-full shadow-lg rounded">
-              <div className="flex-1 min-h-0 overflow-visible relative z-10">
+<div className="p-6 flex flex-col bg-white w-full shadow-lg rounded relative">
+  <div className="flex-1 min-h-0 overflow-visible">
+    {errorMessage ? (
+      <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        ❗ {errorMessage}
+      </div>
+    ) : (
+      <Chart
+        chartType="TreeMap"
+        width="100%"
+        height="100%"
+        data={chartData4}
+        options={options4}
+        chartEvents={chartEvents}
+      />
+    )}
 
-
-                {errorMessage ? (
-                  <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  ❗ {errorMessage}
-                  </div>
-                ) : (
-                  <Chart
-                    chartType="TreeMap"
-                    width="100%"
-                    height="100%"
-                    data={chartData4}
-                    options={options4}
-                    chartEvents={[
-                      {
-                        eventName: "select",
-                        callback: ({ chartWrapper }) => {
-                          const chart = chartWrapper.getChart();
-                          chart.setSelection([]);
-                        },
-                      },
-                    ]}
-                  />
-                )}
-              </div>
-            </div>
+    {/* ✅ 커스텀 툴팁 */}
+    {hoverInfo && (
+      <div
+        className="fixed z-[9999] bg-white border border-gray-400 px-3 py-2 rounded shadow-lg text-sm"
+        style={{
+          top: hoverInfo.y + 10,
+          left: hoverInfo.x + 10,
+          pointerEvents: 'none',
+        }}
+      >
+        <strong>{hoverInfo.name}</strong>
+        <br />
+        방문자 수: {hoverInfo.value.toLocaleString()}명
+      </div>
+    )}
+  </div>
+</div>
           </div>
         </div>
       )}
