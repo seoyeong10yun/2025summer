@@ -98,11 +98,11 @@ const AiReportModal = ({ isOpen, onClose }) => {
             {/* ✅ 리포트 나란히 표시 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
               <div className="prose prose-sm text-gray-800">
-                <h1 className="pl-10"> 경남지역 관광 데이터 요약 </h1>
+                <h1 className="pl-2 pt-5 mb-2"> 경남지역 관광 데이터 요약 </h1>
                 <ReactMarkdown>{report1}</ReactMarkdown>
               </div>
               <div className="prose prose-sm text-gray-800">
-                <h1 className="pl-10"> 경남 주요 관광 이슈 </h1>
+                <h1 className="pl-2 pt-5 mb-2"> 경남 주요 관광 이슈 </h1>
                 <ReactMarkdown>{report2}</ReactMarkdown>
               </div>
             </div>
