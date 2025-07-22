@@ -610,10 +610,11 @@ export default function DashboardPage() {
 
 
   // ---------------------------------------------------------------------------------------------------------------------------------
-  // 버블 차트
+  // 트리맵 차트
   // ---------------------------------------------------------------------------------------------------------------------------------
 
   const [bubbleData, setBubbleData] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
 
   
   const resolvedRegion = useMemo(() => {
@@ -626,9 +627,10 @@ export default function DashboardPage() {
     const fetchData = async () => {
       const { data, error } = await handleApi(fetchTouristQuery, resolvedRegion);
       if (error) {
-        alert(error);
+        setErrorMessage(error);
       } else {
         setBubbleData(data.places);
+        setErrorMessage('');
       }
     };
   
@@ -796,6 +798,21 @@ export default function DashboardPage() {
               )}
               </div>
             </div>
+
+
+            {errorMessage && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded shadow-lg max-w-sm text-center">
+                  ❗ {errorMessage}
+                  <button
+                    onClick={() => setErrorMessage('')}
+                    className="block mt-3 ml-auto text-sm text-red-600 underline"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

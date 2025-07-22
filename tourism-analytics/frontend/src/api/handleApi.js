@@ -9,7 +9,7 @@ export const handleApi = async (apiFunc, ...args) => {
 
     const isAxiosError = !!err?.isAxiosError;
 
-    const funcName = apiFunc.name || 'Unknown API';
+    // const funcName = apiFunc.name || 'Unknown API';
     const status = err?.response?.status;
     const responseData = err?.response?.data;
 
@@ -23,7 +23,7 @@ export const handleApi = async (apiFunc, ...args) => {
 
     // 📌 네트워크 에러 대응
     const errorMessage =
-      `[${funcName}] ` +
+      // `[${funcName}] ` +
       (!isAxiosError
         ? `❗ 일반 오류: ${detail}`
         : err.message === 'Network Error'
