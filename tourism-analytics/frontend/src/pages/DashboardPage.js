@@ -651,7 +651,7 @@ export default function DashboardPage() {
     fontColor: "black",
     generateTooltip: (row) => {
       return `
-        <div style="background:#ffffff; padding:5px; border-style:solid absolute z-[9999]">
+        <div style="background:#ffffff; padding:5px; border-style:solid">
           <span style="font-family:Courier">
             <b>${chartData4[row + 1][0]}</b><br/>
             방문자 수: ${chartData4[row + 1][2].toLocaleString()}명
@@ -669,7 +669,7 @@ export default function DashboardPage() {
   // ---------------------------------------------------------------------------------------------------------------------------------
 
   return (
-    <div className="h-full w-full overflow-hidden">
+    <div className="h-full w-full overflow-visible">
       {/* 🔹 Dashboard 영역 */}
       {selected && (
         <div className="flex flex-1 h-full">
@@ -773,7 +773,7 @@ export default function DashboardPage() {
 
             {/* 기타 정보 */}
             <div className="p-6 flex flex-col bg-white w-full shadow-lg rounded">
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-visible relative z-10">
 
 
                 {errorMessage ? (
