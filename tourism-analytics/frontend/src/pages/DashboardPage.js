@@ -21,8 +21,6 @@ import { handleApi } from '../api/handleApi';
 import { getTourVisitorStats, getWeatherForecast, getTourPrediction } from '../api/openApi';
 import { fetchTouristQuery } from '../api/internalApi';
 import Chart from "react-google-charts";
-import { createPortal } from 'react-dom';
-
 
 
 
@@ -642,45 +640,18 @@ export default function DashboardPage() {
   const chartData4 = [
     ["Location", "Parent", "Visitors"],
     [rootLabel, null, 0], // 루트 노드
-    ...bubbleData.map(d => [d.name, rootLabel, d.visitors]),
+    ...bubbleData.map(d => [`${d.name} (${d.visitors.toLocaleString()}명)`, rootLabel, d.visitors]),
   ];
-// 👇 트리맵 관련 state 추가
-const [hoverInfo, setHoverInfo] = useState(null);
 
-const chartEvents = [
-  {
-    eventName: 'onmouseover',
-    callback: ({ chartWrapper, event }) => {
-      const chart = chartWrapper.getChart();
-      const selection = chart.getSelection();
-      if (selection.length > 0) {
-        const row = selection[0].row;
-        if (row !== null) {
-          const data = chartData4[row + 1];
-          setHoverInfo({
-            name: data[0],
-            value: data[2],
-            x: event.clientX,
-            y: event.clientY,
-          });
-        }
-      }
-    },
-  },
-  {
-    eventName: 'onmouseout',
-    callback: () => setHoverInfo(null),
-  },
-];
-
-const options4 = {
-  minColor: "#e0f7fa",
-  midColor: "#80deea",
-  maxColor: "#00796b",
-  headerHeight: 20,
-  fontColor: "black",
-  // ✅ generateTooltip 제거함
-};
+  const options4 = {
+    minColor: "#e0f7fa",
+    midColor: "#80deea",
+    maxColor: "#00796b",
+    headerHeight: 20,
+    fontColor: "black",
+    generateTooltip: () => '', // ✅ 툴팁 제거
+  };
+  
 
   
   
@@ -689,7 +660,7 @@ const options4 = {
   // ---------------------------------------------------------------------------------------------------------------------------------
 
   return (
-    <div className="h-full w-full overflow-visible">
+    <div className="h-full w-full overflow-hidden">
       {/* 🔹 Dashboard 영역 */}
       {selected && (
         <div className="flex flex-1 h-full">
@@ -792,43 +763,51 @@ const options4 = {
             </div>
 
             {/* 기타 정보 */}
-<div className="p-6 flex flex-col bg-white w-full shadow-lg rounded relative">
-  <div className="flex-1 min-h-0 overflow-visible">
-    {errorMessage ? (
-      <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-        ❗ {errorMessage}
-      </div>
-    ) : (
-      <Chart
-        chartType="TreeMap"
-        width="100%"
-        height="100%"
-        data={chartData4}
-        options={options4}
-        chartEvents={chartEvents}
-      />
-    )}
+            <div className="p-6 flex flex-col bg-white w-full shadow-lg rounded">
+              <div className="flex-1 min-h-0 relative z-0">
 
-    {/* ✅ 커스텀 툴팁 */}
-    {hoverInfo &&
-      createPortal(
-        <div
-          className="fixed z-[9999] bg-white border border-gray-400 px-3 py-2 rounded shadow-lg text-sm"
-          style={{
-            top: hoverInfo.y + 10,
-            left: hoverInfo.x + 10,
-            pointerEvents: 'none',
-          }}
-        >
-          <strong>{hoverInfo.name}</strong>
-          <br />
-          방문자 수: {hoverInfo.value.toLocaleString()}명
-        </div>,
-        document.body
-      )
-    }
-  </div>
-</div>
+
+                {errorMessage ? (
+                  <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  ❗ {errorMessage}
+                  </div>
+                ) : (
+                  <Chart
+                    chartType="TreeMap"
+                    width="100%"
+                    height="100%"
+                    data={chartData4}
+                    options={options4}
+                    chartEvents={[
+                      {
+                        eventName: "select",
+                        callback: ({ chartWrapper }) => {
+                          const chart = chartWrapper.getChart();
+                          const selection = chart.getSelection();
+                    
+                          // 이미 선택된 항목을 다시 클릭하면 해제
+                          if (selection.length > 0) {
+                            const prevSelection = chart.__lastSelection;
+                            const isSame =
+                              prevSelection &&
+                              prevSelection.row === selection[0].row &&
+                              prevSelection.column === selection[0].column;
+                    
+                            if (isSame) {
+                              chart.setSelection([]); // 선택 해제
+                              chart.__lastSelection = null;
+                            } else {
+                              chart.__lastSelection = selection[0]; // 새로 선택
+                            }
+                          }
+                        },
+                      },
+                    ]}
+                    
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
