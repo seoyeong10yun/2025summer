@@ -28,12 +28,14 @@ small {
 
 
 
-/* Google Chart tooltip이 다른 요소에 가리지 않도록 처리 */
+/* tooltip이 절대 가려지지 않도록 */
+body {
+  overflow: visible !important;
+}
 .google-visualization-tooltip {
   z-index: 9999 !important;
-  pointer-events: none;
-  position: absolute;
 }
+
 
 /* 차트가 들어가는 상위 div에도 적용 가능 (예: 클래스 이름 .treemap-wrapper 등) */
 .treemap-container {

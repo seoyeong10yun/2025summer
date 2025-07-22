@@ -21,6 +21,8 @@ import { handleApi } from '../api/handleApi';
 import { getTourVisitorStats, getWeatherForecast, getTourPrediction } from '../api/openApi';
 import { fetchTouristQuery } from '../api/internalApi';
 import Chart from "react-google-charts";
+import { createPortal } from 'react-dom';
+
 
 
 
@@ -808,20 +810,23 @@ const options4 = {
     )}
 
     {/* ✅ 커스텀 툴팁 */}
-    {hoverInfo && (
-      <div
-        className="fixed z-[9999] bg-white border border-gray-400 px-3 py-2 rounded shadow-lg text-sm"
-        style={{
-          top: hoverInfo.y + 10,
-          left: hoverInfo.x + 10,
-          pointerEvents: 'none',
-        }}
-      >
-        <strong>{hoverInfo.name}</strong>
-        <br />
-        방문자 수: {hoverInfo.value.toLocaleString()}명
-      </div>
-    )}
+    {hoverInfo &&
+      createPortal(
+        <div
+          className="fixed z-[9999] bg-white border border-gray-400 px-3 py-2 rounded shadow-lg text-sm"
+          style={{
+            top: hoverInfo.y + 10,
+            left: hoverInfo.x + 10,
+            pointerEvents: 'none',
+          }}
+        >
+          <strong>{hoverInfo.name}</strong>
+          <br />
+          방문자 수: {hoverInfo.value.toLocaleString()}명
+        </div>,
+        document.body
+      )
+    }
   </div>
 </div>
           </div>
