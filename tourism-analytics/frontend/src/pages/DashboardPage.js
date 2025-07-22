@@ -17,8 +17,6 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import 'swiper/css';
-import 'swiper/css/pagination';
 import { handleApi } from '../api/handleApi';
 import { getTourVisitorStats, getWeatherForecast, getTourPrediction } from '../api/openApi';
 import { fetchTouristQuery } from '../api/internalApi';
@@ -776,43 +774,32 @@ export default function DashboardPage() {
             {/* 기타 정보 */}
             <div className="p-6 flex flex-col bg-white w-full shadow-lg rounded">
               <div className="flex-1 min-h-0">
-              {chartData4.length > 1 ? (
-                <Chart
-                  chartType="TreeMap"
-                  width="100%"
-                  height="100%"
-                  data={chartData4}
-                  options={options4}
-                  chartEvents={[
-                    {
-                      eventName: "select",
-                      callback: ({ chartWrapper }) => {
-                        const chart = chartWrapper.getChart();
-                        chart.setSelection([]);
+
+
+                {errorMessage ? (
+                  <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  ❗ {errorMessage}
+                  </div>
+                ) : (
+                  <Chart
+                    chartType="TreeMap"
+                    width="100%"
+                    height="100%"
+                    data={chartData4}
+                    options={options4}
+                    chartEvents={[
+                      {
+                        eventName: "select",
+                        callback: ({ chartWrapper }) => {
+                          const chart = chartWrapper.getChart();
+                          chart.setSelection([]);
+                        },
                       },
-                    },
-                  ]}
-                />
-              ) : (
-                <p>로딩 중...</p>
-              )}
+                    ]}
+                  />
+                )}
               </div>
             </div>
-
-
-            {errorMessage && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-                <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded shadow-lg max-w-sm text-center">
-                  ❗ {errorMessage}
-                  <button
-                    onClick={() => setErrorMessage('')}
-                    className="block mt-3 ml-auto text-sm text-red-600 underline"
-                  >
-                    닫기
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
