@@ -75,10 +75,8 @@ async def query_data(
     for col in df.columns:
         if "_" in col:
             suffix = col.split("_", 1)[1]
-            print(f"col: {col}, suffix: {suffix}")  # 🔍 여기서 중간 확인
             if suffix == target:
                 matching_cols.append(col)
-                print(matching_cols)
     
     if not matching_cols:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="지정된 전년동기대비 데이터가 없습니다.")
@@ -88,6 +86,7 @@ async def query_data(
     sorted_places=filtered_places.sort_values(by=month_col,ascending=False)
     
     # dataframe 로우명 설정
+    # 값이 NaN이거나 비어있는 항목은 배제함
     result=[]
     for _, row in sorted_places.iterrows():
         if pd.isna(row[month_col]):
@@ -96,11 +95,6 @@ async def query_data(
             "name": row["관광지"],
             "visitors": int(row[month_col])
         })
-        
-    # result=sorted_places.apply(lambda row: {
-    #     "name": row['관광지'],
-    #     "visitors": row[month_col]
-    # },axis=1).tolist()
     
     return{
         "success":True,
