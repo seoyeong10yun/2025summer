@@ -651,7 +651,7 @@ export default function DashboardPage() {
     fontColor: "black",
     generateTooltip: (row) => {
       return `
-        <div style="background:#ffffff; padding:5px; border-style:solid">
+        <div style="background:#ffffff; padding:5px; border-style:solid absolute z-[9999]">
           <span style="font-family:Courier">
             <b>${chartData4[row + 1][0]}</b><br/>
             방문자 수: ${chartData4[row + 1][2].toLocaleString()}명
