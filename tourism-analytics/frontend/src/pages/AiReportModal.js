@@ -89,7 +89,16 @@ const AiReportModal = ({ isOpen, onClose }) => {
         className="bg-white max-w-[90vw] max-h-[90vh] w-full sm:w-[1200px] rounded-lg shadow-lg p-6 overflow-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold mb-4">📄 AI 리포트</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">📄 AI 리포트</h2>
+          <button
+            onClick={onClose} // 닫기 함수 지정 필요
+            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+          >
+            ×
+          </button>
+        </div>
+
 
         {loading ? (
           <p>로딩 중...</p>
