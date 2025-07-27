@@ -8,7 +8,10 @@ import { fetchReport } from '../api/internalApi';
 
 
 const AiReportModal = ({ isOpen, onClose }) => {
+  // 경남지역 관광 데이터 요약 내용
   const [report1, setReport1] = useState();
+
+  // 경남 주요 관광 이슈 내용
   const [report2, setReport2] = useState();
 
   const [loading, setLoading] = useState(true);
@@ -28,7 +31,6 @@ const AiReportModal = ({ isOpen, onClose }) => {
         return;
       }
   
-      // 실제 데이터가 report1 / report2 형식으로 오지 않으면 여기서 구조 맞춰야 함
       setReport1(data.data_summary);
       setReport2(data.issue_summary);
   

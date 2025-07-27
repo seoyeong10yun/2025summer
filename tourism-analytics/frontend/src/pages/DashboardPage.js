@@ -26,6 +26,7 @@ import Chart from "react-google-charts";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement,BarElement, BubbleController, ChartTooltip, Legend, Filler, ChartDataLabels);
 
+// 창원시의 경우 한국관광공사에서는 5개의 구를 나눠 api 요청을 하고 excel 파일에서는 통합차원시로 합쳐져있어서 따로 만들어 줌
 const changwonAreas = [
   '창원시 마산합포구',
   '창원시 마산회원구',
@@ -67,8 +68,8 @@ export default function DashboardPage() {
   // ---------------------------------------------------------------------------------------------------------------------------------
   // 관광지역 일별 방문자 수 대시보드
   // ---------------------------------------------------------------------------------------------------------------------------------
-  const [visitorData, setVisitorData] = useState(null);
-  const [filteredChartData, setFilteredChartData] = useState([]);
+  const [visitorData, setVisitorData] = useState(null);               // 방문자수
+  const [filteredChartData, setFilteredChartData] = useState([]);     // 필요한 데이터만 추출
 
   // 웹 사이트 접속시 방문자 수 조회, 이후에는 가지고 있는 데이터에서 필터링 하여 표시하므로 api 재요청 필요없음
   useEffect(() => {
@@ -136,6 +137,9 @@ export default function DashboardPage() {
   }, [visitorData, selectedSigngu]);
 
 
+  // ---------------------------------------------------------------------------------------------------------------------------------
+  // 관광지역 일별 방문자 수 데이터 시각화 옵션 설정
+  // ---------------------------------------------------------------------------------------------------------------------------------
   const labels = filteredChartData.map(item => item.touDivNm); // ex: 현지인, 외지인, 외국인
   const dataValues = filteredChartData.map(item => item.touNum);
 
@@ -275,6 +279,7 @@ export default function DashboardPage() {
         };
       });
     } 
+
     // 기온을 표시할때 하늘상태 동시에 표시하기 위한 코드
     else if (category === 'T1H') {
       const skyItems = data.filter(item => item.category === 'SKY');
@@ -317,68 +322,6 @@ export default function DashboardPage() {
   }, [forecastData, selectedSigngu, handleClick, selectedCategory, selectedLabel]);
   
 
-
-
-
-  // ---------------------------------------------------------------------------------------------------------------------------------
-  // 관광지역 방문자수 추이 및 예측 정보 대시보드
-  // ---------------------------------------------------------------------------------------------------------------------------------
-  const [items, setItems] = useState([]); // ✅ 추가 필요
-  const [chartData2, setChartData2] = useState([]);
-  const [selectedTourName, setSelectedTourName] = useState('');
-  
-  useEffect(() => {
-
-
-    const fetchLinkRateData = async () => {
-      if (!selectedSigngu) return;
-      
-      const { data, error } = await handleApi(getTourPrediction, {
-        numOfRows: 6000,
-        pageNo: 1,
-        MobileOS: 'ETC',
-        MobileApp: 'AppTest',
-        areaCd: 48,
-        signguCd: signgureaIdMap[selectedSigngu],
-        _type: 'json',
-      });
-    
-      if (error) {
-        console.error(error);
-        return;
-      }
-      
-      const res = data.response.body.items?.item || [];
-
-      if (res.length > 0) {
-        setItems(res); // ✅ 원본 저장
-        setSelectedTourName(res[0].tAtsNm); // ✅ 초기 선택값 설정
-      }
-    
-    };
-  
-    fetchLinkRateData();
-  }, [selectedSigngu]);
-  
-  // ✅ 관광지 목록 (select용)
-  const uniqueTourNames = [...new Set(items.map(item => item.tAtsNm))];
-  
-  // ✅ 관광지 선택 시 해당 데이터만 추출
-  useEffect(() => {
-    if (!selectedTourName || items.length === 0) return;
-  
-    const result = items
-      .filter(item => item.tAtsNm === selectedTourName && item.cnctrRate && item.baseYmd)
-      .sort((a, b) => a.baseYmd.localeCompare(b.baseYmd))
-      .map(item => ({
-        time: `${item.baseYmd.slice(4, 6)}/${item.baseYmd.slice(6, 8)}`,
-        value: parseFloat(item.cnctrRate),
-      }));
-  
-    setChartData2(result);
-  }, [selectedTourName, items]);
-
-  
   // ---------------------------------------------------------------------------------------------------------------------------------
   // 날씨 데이터 시각화 옵션 설정
   // ---------------------------------------------------------------------------------------------------------------------------------
@@ -520,6 +463,69 @@ export default function DashboardPage() {
   
 
 
+
+
+  // ---------------------------------------------------------------------------------------------------------------------------------
+  // 관광지역 방문자수 추이 및 예측 정보 대시보드
+  // ---------------------------------------------------------------------------------------------------------------------------------
+  const [items, setItems] = useState([]); // ✅ 추가 필요
+  const [chartData2, setChartData2] = useState([]);
+  const [selectedTourName, setSelectedTourName] = useState('');
+  
+  useEffect(() => {
+
+
+    const fetchLinkRateData = async () => {
+      if (!selectedSigngu) return;
+      
+      const { data, error } = await handleApi(getTourPrediction, {
+        numOfRows: 6000,
+        pageNo: 1,
+        MobileOS: 'ETC',
+        MobileApp: 'AppTest',
+        areaCd: 48,
+        signguCd: signgureaIdMap[selectedSigngu],
+        _type: 'json',
+      });
+    
+      if (error) {
+        console.error(error);
+        return;
+      }
+      
+      const res = data.response.body.items?.item || [];
+
+      if (res.length > 0) {
+        setItems(res); // ✅ 원본 저장
+        setSelectedTourName(res[0].tAtsNm); // ✅ 초기 선택값 설정
+      }
+    
+    };
+  
+    fetchLinkRateData();
+  }, [selectedSigngu]);
+  
+  // ✅ 관광지 목록 (select용)
+  const uniqueTourNames = [...new Set(items.map(item => item.tAtsNm))];
+  
+  // ✅ 관광지 선택 시 해당 데이터만 추출
+  useEffect(() => {
+    if (!selectedTourName || items.length === 0) return;
+  
+    const result = items
+      .filter(item => item.tAtsNm === selectedTourName && item.cnctrRate && item.baseYmd)
+      .sort((a, b) => a.baseYmd.localeCompare(b.baseYmd))
+      .map(item => ({
+        time: `${item.baseYmd.slice(4, 6)}/${item.baseYmd.slice(6, 8)}`,
+        value: parseFloat(item.cnctrRate),
+      }));
+  
+    setChartData2(result);
+  }, [selectedTourName, items]);
+
+  
+  
+
   // ---------------------------------------------------------------------------------------------------------------------------------
   // 방문자 추이예측 데이터 시각화 옵션 설정  (집중률: 최대 방문자 수 대비 예측 방문자수 비율인듯)
   // ---------------------------------------------------------------------------------------------------------------------------------
@@ -608,7 +614,7 @@ export default function DashboardPage() {
 
 
   // ---------------------------------------------------------------------------------------------------------------------------------
-  // 트리맵 차트
+  // 작년 동월 관광지 방문 분포 트리맵 차트
   // ---------------------------------------------------------------------------------------------------------------------------------
 
   const [bubbleData, setBubbleData] = useState([]);

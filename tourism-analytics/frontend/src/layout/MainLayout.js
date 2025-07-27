@@ -19,19 +19,21 @@ const AVAILABLE_PROVINCE_COMPONENTS = {
 
 export default function MainLayout() {
   const navigate = useNavigate();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [isReportOpen, setIsReportOpen] = useState(false); 
-  const [selectedProvince, setSelectedProvince] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);          // 관리자 설정 모달
+  const [isAlertOpen, setIsAlertOpen] = useState(false);          // 공지사항 모달
+  const [isReportOpen, setIsReportOpen] = useState(false);        // AI 리포트 모달
+  const [selectedSigngu, setSelectedSigngu] = useState(null);     // 선택한 시군구
+  const [selectedProvince, setSelectedProvince] = useState("");   // 선택한 도/광역시
   const ProvinceComponent = AVAILABLE_PROVINCE_COMPONENTS[selectedProvince];
     
-  const [selected, setSelected] = useState(() => {
+
+  // sessionStorage 에 저장한 시군구 정보 불러오기 (새로고침시 동일 지역 불러오기 위해서)
+  const [selected, setSelected] = useState(() => {                          
       return sessionStorage.getItem("introSeen") === "true";
   });
   
-
-  const [selectedSigngu, setSelectedSigngu] = useState(null);
-  // 값이 바뀔 때마다 세션에 저장
+  
+  // 시군구 값이 바뀔 때마다 세션에 저장
   useEffect(() => {
     if (selectedSigngu) {
       sessionStorage.setItem("selectedSigngu", selectedSigngu);
@@ -41,7 +43,7 @@ export default function MainLayout() {
 
   const [show, setShow] = useState(false);
 
-  // 마우스 위치 감지
+  // 마우스가 화면 왼쪽 끝(80px 이내)에 들어오면 사이드바 표시
   useEffect(() => {
     const handleMouseMove = (e) => {
       setShow(e.clientX < 80);
@@ -51,6 +53,8 @@ export default function MainLayout() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  
+  // 처음 전국 지도로 돌아갈때 초기화하기 위한 함수
   const resetSelection = () => {
     setSelected(false);
     setSelectedProvince(null);
@@ -59,98 +63,100 @@ export default function MainLayout() {
   };
   
 
-
-
-
   return (
     <div className="h-screen w-full overflow-hidden bg-white">
+
       {/* 🔹 인트로 화면 */}
       {!selected ? (
         <AnimatePresence>
           {!selectedProvince ? (
-            <motion.div
-              key="intro"
-              layoutId="mapWrapper"
-              className="fixed top-0 left-0 w-screen min-h-screen z-50 bg-white flex flex-col items-center overflow-y-auto py-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <h2
-                className="font-bold text-2xl cursor-pointer hover:opacity-80 transition"
-                onClick={resetSelection}
-              >
-                KOREA <span className="bg-[#3B82F6] text-white px-2 rounded-md">TOUR</span> DATA
-              </h2>
-
+            <>
+              {/* 전국 지도 */}
               <motion.div
-                layoutId="map"
-                className="w-[80%] max-w-[700px] cursor-pointer "
-                onClick={(e) => {
-                  const pathEl = e.target.closest('path');
-                  const province = pathEl?.id;
-                  console.log(provinceNameFromSlug[province]);
-                  
-                  if (province) {
-                    setSelectedProvince(provinceNameFromSlug[province] || province);
-                  }
-                }}  
-              >
-                <SouthKorea className="w-full h-auto" />
-              </motion.div>
-            </motion.div>
-
-            ) : (
-
-            <motion.div
-              key="intro"
-              layoutId="mapWrapper"
-              className="fixed top-0 left-0 w-screen min-h-screen z-50 bg-white flex flex-col items-center overflow-y-auto py-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <h2
-                className="font-bold text-2xl cursor-pointer hover:opacity-80 transition"
-                onClick={resetSelection}
-              >
-                KOREA <span className="bg-[#3B82F6] text-white px-2 rounded-md">TOUR</span> DATA
-              </h2>
-              <motion.div
-                key="detail"
-                className="w-full h-full flex items-center justify-center p-4"
+                key="intro"
+                layoutId="mapWrapper"
+                className="fixed top-0 left-0 w-screen min-h-screen z-50 bg-white flex flex-col items-center overflow-y-auto py-8"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                onClick={(e) => {
-                  const pathEl = e.target.closest('path');
-                  const signguId = pathEl?.id;
-                  if (signguId) {
-                    setSelectedSigngu(signguNameFromSlug[signguId] || signguId);
-                    setSelected(true);
-                    sessionStorage.setItem("introSeen", "true");
-
-                    // 이동 후 약간 지연되게 색상 적용
-                    setTimeout(() => {
-                      const targetPath = document.querySelector(`svg path[id="${signguId}"]`);
-                      if (targetPath) {
-                        document.querySelectorAll('svg path').forEach((el) => el.classList.remove('selected'));
-                        targetPath.classList.add('selected');
-                      }
-                    }, 500); // 모션 이동 시간(ms)에 맞게 조절 (예: 500ms)
-                  }
-                }}  
               >
-                {ProvinceComponent ? (
-                  <ProvinceComponent className="w-auto h-auto max-w-[800px]" />
-                ) : (
-                  <div className="text-center text-gray-600 text-sm mt-4">
-                    ❗ 서비스 준비중입니다.<br />
-                    <strong>현재 가능한 지역: {Object.keys(AVAILABLE_PROVINCE_COMPONENTS).join(', ')}</strong>
-                  </div>
-                )}
+                <h2
+                  className="font-bold text-2xl cursor-pointer hover:opacity-80 transition"
+                  onClick={resetSelection}
+                >
+                  KOREA <span className="bg-[#3B82F6] text-white px-2 rounded-md">TOUR</span> DATA
+                </h2>
+
+                <motion.div
+                  layoutId="map"
+                  className="w-[80%] max-w-[700px] cursor-pointer "
+                  onClick={(e) => {
+                    const pathEl = e.target.closest('path');
+                    const province = pathEl?.id;
+                    console.log(provinceNameFromSlug[province]);
+                    
+                    if (province) {
+                      setSelectedProvince(provinceNameFromSlug[province] || province);
+                    }
+                  }}  
+                >
+                  <SouthKorea className="w-full h-auto" />
+                </motion.div>
               </motion.div>
-            </motion.div>
+            </>
+            ) : (
+            <>
+              {/* 선택한 지역 시군구 화면 */}
+              <motion.div
+                key="intro"
+                layoutId="mapWrapper"
+                className="fixed top-0 left-0 w-screen min-h-screen z-50 bg-white flex flex-col items-center overflow-y-auto py-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <h2
+                  className="font-bold text-2xl cursor-pointer hover:opacity-80 transition"
+                  onClick={resetSelection}
+                >
+                  KOREA <span className="bg-[#3B82F6] text-white px-2 rounded-md">TOUR</span> DATA
+                </h2>
+                <motion.div
+                  key="detail"
+                  className="w-full h-full flex items-center justify-center p-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={(e) => {
+                    const pathEl = e.target.closest('path');
+                    const signguId = pathEl?.id;
+                    if (signguId) {
+                      setSelectedSigngu(signguNameFromSlug[signguId] || signguId);
+                      setSelected(true);
+                      sessionStorage.setItem("introSeen", "true");
+
+                      // 이동 후 약간 지연되게 색상 적용
+                      setTimeout(() => {
+                        const targetPath = document.querySelector(`svg path[id="${signguId}"]`);
+                        if (targetPath) {
+                          document.querySelectorAll('svg path').forEach((el) => el.classList.remove('selected'));
+                          targetPath.classList.add('selected');
+                        }
+                      }, 500); // 모션 이동 시간(ms)에 맞게 조절 (예: 500ms)
+                    }
+                  }}  
+                >
+                  {ProvinceComponent ? (
+                    <ProvinceComponent className="w-auto h-auto max-w-[800px]" />
+                  ) : (
+                    <div className="text-center text-gray-600 text-sm mt-4">
+                      ❗ 서비스 준비중입니다.<br />
+                      <strong>현재 가능한 지역: {Object.keys(AVAILABLE_PROVINCE_COMPONENTS).join(', ')}</strong>
+                    </div>
+                  )}
+                </motion.div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
 
@@ -170,12 +176,14 @@ export default function MainLayout() {
 
             <AnimatePresence>
               {show && (
+                <> 
+                {/* 플로팅 사이드 바 */}
                 <motion.div
                   initial={{ x: '-100%' }}
                   animate={{ x: 0 }}
                   exit={{ x: '-100%' }}
                   className="fixed inset-y-0 left-0 flex items-center w-30 p-3 bg-transparent rounded-r-xl z-50"
-                >
+                  >
                   <div className="w-30 relative bg-transparent dark:bg-slate-900 pattern">
                     <nav className="z-20 flex shrink-0 grow-0 justify-around gap-4 border-t border-gray-200 bg-white/50 p-2.5 shadow-lg backdrop-blur-lg dark:border-slate-600/60 dark:bg-slate-800/50 left-6 min-h-[auto] min-w-[48px] flex-col rounded-lg border">
                       <button onClick={() => navigate("/dashboard")}>
@@ -202,6 +210,7 @@ export default function MainLayout() {
                     </nav>
                   </div>
                 </motion.div>
+                </>
               )}
             </AnimatePresence>
             {/* Main Area */}
@@ -236,7 +245,7 @@ export default function MainLayout() {
                 )}
               </div>
 
-              {/* Page Content */}
+              {/* 실제 라우팅된 페이지가 렌더링 되는 영역 */}
               <div className="flex-1 overflow-auto p-4 bg-[#f3f4f6] dark:bg-gray-800">
                 <Outlet />
               </div>

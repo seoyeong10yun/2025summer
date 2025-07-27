@@ -3,16 +3,19 @@ import { handleApi } from '../api/handleApi';
 import { adminLogin, changeAdminPassword, uploadExcelFile, uploadReportSource, generateReport } from '../api/internalApi';
 
 export default function AdminModal({ isOpen, onClose }) {
+  // 인증 관련 상태
   const [password, setPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // 비밀번호 변경 관련 상태
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [isResetMode, setIsResetMode] = useState(false);
+
+  // 파일 업로드 관련 상태
   const [file, setFile] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isReadingFile, setIsReadingFile] = useState(false);
-
-
   
 
   const handleLogin = async () => {
@@ -88,14 +91,12 @@ export default function AdminModal({ isOpen, onClose }) {
     }
   };
   
-  
-  
-
+  // 선택한 파일 리셋
   const resetFile = () => {
     setFile(null);
-    // input 요소도 초기화 필요 시 ref로 접근 가능
   };
 
+  // 모달이 열릴 때마다 상태 초기화, 관리자설정은 매번 비번 입력하도록
   useEffect(() => {
     if (isOpen) {
       setPassword('');
